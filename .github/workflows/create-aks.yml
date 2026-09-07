@@ -1,0 +1,38 @@
+name: Create AKS vpa-test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-aks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create resource group
+        run: |
+          az group create --name rg-vpa-test --location eastus
+
+      - name: Create AKS cluster
+        run: |
+          az aks create \
+            --resource-group rg-vpa-test \
+            --name vpa-test \
+            --node-count 1 \
+            --node-vm-size Standard_B2s \
+            --generate-ssh-keys \
+            --enable-managed-identity \
+            --enable-addons monitoring \
+            --location eastus \
+            --yes
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials --resource-group rg-vpa-test --name vpa-test --overwrite-existing
+          kubectl get nodes -o wide
