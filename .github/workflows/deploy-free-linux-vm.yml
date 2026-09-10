@@ -23,7 +23,7 @@ jobs:
         run: |
           az group create \
             --name rg-free-linux-vm \
-            --location westus2
+            --location eastus2
 
       - name: Create virtual network and subnet
         run: |
@@ -79,7 +79,7 @@ jobs:
             --location eastus \
             --nics nic-free-linux \
             --image Ubuntu2204 \
-            --size Standard_B1s \
+            --size Standard_B1ms \
             --admin-username azureuser \
             --generate-ssh-keys \
             --public-ip-sku Standard
