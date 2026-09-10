@@ -1,0 +1,94 @@
+name: Deploy Free Linux VM to Azure
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-vm:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create resource group
+        run: |
+          az group create \
+            --name rg-free-linux-vm \
+            --location eastus
+
+      - name: Create virtual network and subnet
+        run: |
+          az network vnet create \
+            --resource-group rg-free-linux-vm \
+            --name vnet-free-linux \
+            --address-prefix 10.0.0.0/16 \
+            --subnet-name subnet-free-linux \
+            --subnet-prefix 10.0.0.0/24
+
+      - name: Create NSG and allow SSH
+        run: |
+          az network nsg create \
+            --resource-group rg-free-linux-vm \
+            --name nsg-free-linux
+
+          az network nsg rule create \
+            --resource-group rg-free-linux-vm \
+            --nsg-name nsg-free-linux \
+            --name AllowSSH \
+            --priority 1000 \
+            --source-address-prefixes '*' \
+            --source-port-ranges '*' \
+            --destination-address-prefixes '*' \
+            --destination-port-ranges 22 \
+            --direction Inbound \
+            --access Allow \
+            --protocol Tcp
+
+      - name: Create public IP
+        run: |
+          az network public-ip create \
+            --resource-group rg-free-linux-vm \
+            --name pip-free-linux \
+            --sku Standard \
+            --allocation-method Static
+
+      - name: Create NIC
+        run: |
+          az network nic create \
+            --resource-group rg-free-linux-vm \
+            --name nic-free-linux \
+            --vnet-name vnet-free-linux \
+            --subnet subnet-free-linux \
+            --network-security-group nsg-free-linux \
+            --public-ip-address pip-free-linux
+
+      - name: Create Linux VM
+        run: |
+          az vm create \
+            --resource-group rg-free-linux-vm \
+            --name vm-free-linux-01 \
+            --location eastus \
+            --nics nic-free-linux \
+            --image Ubuntu2204 \
+            --size Standard_B1s \
+            --admin-username azureuser \
+            --generate-ssh-keys \
+            --public-ip-sku Standard
+
+      - name: Get VM public IP
+        run: |
+          az vm show \
+            --resource-group rg-free-linux-vm \
+            --name vm-free-linux-01 \
+            --show-details \
+            --query publicIps \
+            -o tsv
