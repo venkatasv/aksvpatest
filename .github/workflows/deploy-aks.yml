@@ -1,0 +1,44 @@
+name: Deploy AKS and Bootstrap GitOps
+
+on:
+  workflow_dispatch:
+
+env:
+  RG_NAME: "rg-aks-gitops"
+  LOCATION: "centralindia"
+  AKS_NAME: "aks-cluster-01"
+
+jobs:
+  deploy-aks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group & AKS Cluster
+        run: |
+          az group create --name ${{ env.RG_NAME }} --location ${{ env.LOCATION }}
+          az aks create \
+            --resource-group ${{ env.RG_NAME }} \
+            --name ${{ env.AKS_NAME }} \
+            --node-count 1 \
+            --generate-ssh-keys
+
+      - name: Get AKS Credentials
+        run: az aks get-credentials --resource-group ${{ env.RG_NAME }} --name ${{ env.AKS_NAME }}
+
+      - name: Install Argo CD and Bootstrap
+        run: |
+          kubectl create namespace argocd
+          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+          
+          # Wait for Argo CD server to be ready
+          kubectl wait --for=condition=Available deployment/argocd-server -n argocd --timeout=300s
+          
+          # Apply the root App of Apps to start the GitOps sync
+          kubectl apply -f appofapp/root-app.yaml
