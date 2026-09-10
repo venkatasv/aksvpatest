@@ -3,6 +3,17 @@ name: Deploy Free Linux VM to Azure
 on:
   workflow_dispatch:
 
+# Define global variables here to prevent typos and region mismatches
+env:
+  RG_NAME: "rg-free-linux-india"
+  LOCATION: "centralindia"
+  VNET_NAME: "vnet-free-linux"
+  SUBNET_NAME: "subnet-free-linux"
+  NSG_NAME: "nsg-free-linux"
+  PIP_NAME: "pip-free-linux"
+  NIC_NAME: "nic-free-linux"
+  VM_NAME: "vm-free-linux-01"
+
 jobs:
   deploy-vm:
     runs-on: ubuntu-latest
@@ -22,28 +33,29 @@ jobs:
       - name: Create resource group
         run: |
           az group create \
-            --name rg-freee-linux-vm \
-            --location centralus
+            --name ${{ env.RG_NAME }} \
+            --location ${{ env.LOCATION }}
 
       - name: Create virtual network and subnet
         run: |
           az network vnet create \
-            --resource-group rg-freee-linuxx-vm \
-            --location $LOCATION \
-            --name vnet-free-linux \
+            --resource-group ${{ env.RG_NAME }} \
+            --location ${{ env.LOCATION }} \
+            --name ${{ env.VNET_NAME }} \
             --address-prefix 10.0.0.0/16 \
-            --subnet-name subnet-free-linux \
+            --subnet-name ${{ env.SUBNET_NAME }} \
             --subnet-prefix 10.0.0.0/24
 
       - name: Create NSG and allow SSH
         run: |
           az network nsg create \
-            --resource-group rg-freee-linuxx-vm \
-            --name nsg-free-linux
+            --resource-group ${{ env.RG_NAME }} \
+            --location ${{ env.LOCATION }} \
+            --name ${{ env.NSG_NAME }}
 
           az network nsg rule create \
-            --resource-group rg-freee-linuxx-vm \
-            --nsg-name nsg-free-linux \
+            --resource-group ${{ env.RG_NAME }} \
+            --nsg-name ${{ env.NSG_NAME }} \
             --name AllowSSH \
             --priority 1000 \
             --source-address-prefixes '*' \
@@ -57,39 +69,40 @@ jobs:
       - name: Create public IP
         run: |
           az network public-ip create \
-            --resource-group rg-freee-linuxx-vm \
-            --name pip-free-linux \
+            --resource-group ${{ env.RG_NAME }} \
+            --location ${{ env.LOCATION }} \
+            --name ${{ env.PIP_NAME }} \
             --sku Standard \
             --allocation-method Static
 
       - name: Create NIC
         run: |
           az network nic create \
-            --resource-group rg-freee-linuxx-vm \
-            --name nic-free-linux \
-            --vnet-name vnet-free-linux \
-            --subnet subnet-free-linux \
-            --network-security-group nsg-free-linux \
-            --public-ip-address pip-free-linux
+            --resource-group ${{ env.RG_NAME }} \
+            --location ${{ env.LOCATION }} \
+            --name ${{ env.NIC_NAME }} \
+            --vnet-name ${{ env.VNET_NAME }} \
+            --subnet ${{ env.SUBNET_NAME }} \
+            --network-security-group ${{ env.NSG_NAME }} \
+            --public-ip-address ${{ env.PIP_NAME }}
 
       - name: Create Linux VM
         run: |
           az vm create \
-            --resource-group rg-freee-linuxx-vm \
-            --name vm-free-linux-01 \
-            --location eastus \
-            --nics nic-free-linux \
+            --resource-group ${{ env.RG_NAME }} \
+            --location ${{ env.LOCATION }} \
+            --name ${{ env.VM_NAME }} \
+            --nics ${{ env.NIC_NAME }} \
             --image Ubuntu2204 \
-            --size Standard_B2ats_v2 \
+            --size Standard_B1s \
             --admin-username azureuser \
-            --generate-ssh-keys \
-            --public-ip-sku Standard
+            --generate-ssh-keys
 
       - name: Get VM public IP
         run: |
           az vm show \
-            --resource-group rg-freee-linuxx-vm \
-            --name vm-free-linux-01 \
+            --resource-group ${{ env.RG_NAME }} \
+            --name ${{ env.VM_NAME }} \
             --show-details \
             --query publicIps \
             -o tsv
