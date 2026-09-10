@@ -94,7 +94,7 @@ jobs:
             --name ${{ env.VM_NAME }} \
             --nics ${{ env.NIC_NAME }} \
             --image Ubuntu2204 \
-            --size Standard_B1s \
+            --size Standard_B2ats_v2 \
             --admin-username azureuser \
             --generate-ssh-keys
 
