@@ -1,0 +1,37 @@
+name: Deploy Rocky Linux VM to Azure
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: 
+
+jobs:
+  provision-vm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group and Rocky Linux VM
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            RG="Development"
+            LOCATION="eastus"
+            VM_NAME="rocky-linux-vm01"
+            
+            az group create --name $RG --location $LOCATION
+            
+            az vm create \
+              --resource-group $RG \
+              --name $VM_NAME \
+              --image erockyenterprisesoftwarefoundationinc1653071250513:rockylinux-9:rockylinux-9:latest \
+              --admin-username azureuser \
+              --generate-ssh-keys \
+              --public-ip-sku Standard
