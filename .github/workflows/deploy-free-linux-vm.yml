@@ -79,7 +79,7 @@ jobs:
             --location eastus \
             --nics nic-free-linux \
             --image Ubuntu2204 \
-            --size Standard_B1s \
+            --size Standard_B2pts_v2 \
             --admin-username azureuser \
             --generate-ssh-keys \
             --public-ip-sku Standard
