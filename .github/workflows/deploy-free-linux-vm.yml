@@ -29,6 +29,7 @@ jobs:
         run: |
           az network vnet create \
             --resource-group rg-freee-linuxx-vm \
+            --location $LOCATION \
             --name vnet-free-linux \
             --address-prefix 10.0.0.0/16 \
             --subnet-name subnet-free-linux \
