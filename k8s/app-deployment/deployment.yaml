@@ -1,18 +1,18 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
 metadata:
-  name: demo-app
-  namespace: demo-app-ns
+  name: demo-app-deployment
+  namespace: argocd
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: demo
-  template:
-    metadata:
-      labels:
-        app: demo
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:latest
+  project: default
+  source:
+    repoURL: 'https://github.com/venkatasv/aksvpatest.git'
+    targetRevision: HEAD
+    path: k8s/app-deployment
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: argocd # Change this to your specific namespace if needed
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
