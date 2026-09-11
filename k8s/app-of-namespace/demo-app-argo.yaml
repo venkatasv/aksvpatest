@@ -11,7 +11,7 @@ spec:
     path: app-deployment # Ensure this matches your actual folder name in GitHub
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: demo-app-ns # Ensure this matches the namespace created by app-of-namespaces
+    namespace: demo-app-namespace # Ensure this matches the namespace created by app-of-namespaces
   syncPolicy:
     automated:
       prune: true
