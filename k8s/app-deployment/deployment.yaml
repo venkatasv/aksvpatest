@@ -1,18 +1,40 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: app-deployment
-  namespace: argocd
+  name: nginx-demo
+  namespace: demo-app-namespace
 spec:
-  project: default
-  source:
-    repoURL: 'https://github.com/venkatasv/aksvpatest.git'
-    targetRevision: HEAD
-    path: k8s/app-deployment
-  destination:
-    server: 'https://kubernetes.default.svc'
-    namespace: argocd # Change this to your specific namespace if needed
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-demo
+  template:
+    metadata:
+      labels:
+        app: nginx-demo
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-demo
+  namespace: demo-app-namespace
+spec:
+  selector:
+    app: nginx-demo
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP

@@ -26,9 +26,14 @@ jobs:
           az aks create \
             --resource-group ${{ env.RG_NAME }} \
             --name ${{ env.AKS_NAME }} \
+            --location ${{ env.LOCATION }} \
+            --tier free \
             --node-count 1 \
-            --node-vm-size Standard_B2s_v2 \
-            --generate-ssh-keys
+            --node-vm-size Standard_B2s \
+            --os-sku AzureLinux \
+            --generate-ssh-keys \
+            --enable-managed-identity \
+            --network-plugin azure
 
       - name: Get AKS Credentials
         run: az aks get-credentials --resource-group ${{ env.RG_NAME }} --name ${{ env.AKS_NAME }}
