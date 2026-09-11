@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-deployment
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/venkatasv/aksvpatest.git'
+    targetRevision: HEAD
+    path: app-deployment # Ensure this matches your actual folder name in GitHub
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: demo-app-ns # Ensure this matches the namespace created by app-of-namespaces
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
