@@ -19,7 +19,7 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
+          
       - name: Create Resource Group & AKS Cluster
         run: |
           az group create --name ${{ env.RG_NAME }} --location ${{ env.LOCATION }}
@@ -27,6 +27,7 @@ jobs:
             --resource-group ${{ env.RG_NAME }} \
             --name ${{ env.AKS_NAME }} \
             --node-count 1 \
+            --node-vm-size Standard_B2s_v2 \
             --generate-ssh-keys
 
       - name: Get AKS Credentials
