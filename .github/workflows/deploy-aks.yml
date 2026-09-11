@@ -35,8 +35,10 @@ jobs:
 
       - name: Install Argo CD and Bootstrap
         run: |
-          kubectl create namespace argocd
-          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+          kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Use server-side apply to bypass the 256KB CRD annotation size limit
+          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side --force-conflicts
           
           # Wait for Argo CD server to be ready
           kubectl wait --for=condition=Available deployment/argocd-server -n argocd --timeout=300s
