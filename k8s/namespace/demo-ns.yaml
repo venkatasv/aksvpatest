@@ -1,4 +1,18 @@
-apiVersion: v1
-kind: Namespace
+apiVersion: argoproj.io/v1alpha1
+kind: Application
 metadata:
-  name: demo-app-ns
+  name: demo-namespaces
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/venkatasv/aksvpatest.git'
+    targetRevision: HEAD
+    path: k8s/namespace
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
