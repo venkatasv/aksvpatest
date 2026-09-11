@@ -44,4 +44,4 @@ jobs:
           kubectl wait --for=condition=Available deployment/argocd-server -n argocd --timeout=300s
           
           # Apply the root App of Apps to start the GitOps sync
-          kubectl apply -f appofapp/root-app.yaml
+          kubectl apply -f app-of-app/root-app.yaml
