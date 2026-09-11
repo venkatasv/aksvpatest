@@ -7,8 +7,9 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/venkatasv/aksvpatest.git'
-    targetRevision: HEAD
+    targetRevision: add-aks-workflow
     path: k8s/app-deployment
+    
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: argocd # Change this to your specific namespace if needed
