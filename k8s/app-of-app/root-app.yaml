@@ -6,9 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/YOUR_GITHUB_USER/YOUR_REPO_NAME.git'
+    repoURL: 'https://github.com/venkatasv/aksvpatest.git'
     targetRevision: HEAD
-    path: appofnamespace
+    path: k8s/app-of-namespace
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: argocd
