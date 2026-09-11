@@ -6,7 +6,7 @@ on:
 env:
   RG_NAME: "rg-aks-gitops"
   LOCATION: "centralindia"
-  AKS_NAME: "aks-cluster-01"
+  AKS_NAME: "aks-cluster-02"
 
 jobs:
   deploy-aks:
