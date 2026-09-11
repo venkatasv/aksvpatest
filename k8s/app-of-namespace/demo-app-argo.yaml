@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: demo-app-deployment
+  name: root-app-of-apps
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/YOUR_GITHUB_USER/YOUR_REPO_NAME.git'
+    repoURL: 'https://github.com/venkatasv/aksvpatest.git'
     targetRevision: HEAD
-    path: appdeployment
+    path: k8s/app-of-namespace
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: demo-app-ns
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
