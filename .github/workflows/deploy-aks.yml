@@ -29,7 +29,7 @@ jobs:
             --location ${{ env.LOCATION }} \
             --tier free \
             --node-count 1 \
-            --node-vm-size Standard_B2s_v2 \
+            --node-vm-size standard_b2als_v2 \
             --os-sku AzureLinux \
             --generate-ssh-keys \
             --enable-managed-identity \
