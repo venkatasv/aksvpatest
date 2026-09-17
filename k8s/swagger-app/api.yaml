@@ -173,6 +173,6 @@ spec:
     app: swagger-api
   ports:
     - name: http
-      port: 8000
+      port: 9000
       targetPort: 8000
   type: ClusterIP
