@@ -1,0 +1,31 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: swagger-api-vpa
+  namespace: swagger-app
+  labels:
+    app: swagger-api
+    managed-by: gitops
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: swagger-api
+  updatePolicy:
+    # Off = recommendation only (GitOps-safe). Do NOT use Recreate/Auto with Argo selfHeal
+    # until you decide how recommendations flow back into Git.
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: api
+        minAllowed:
+          cpu: 25m
+          memory: 64Mi
+        maxAllowed:
+          cpu: 500m
+          memory: 512Mi
+        controlledResources:
+          - cpu
+          - memory
+        # Keep requests under VPA control; leave limits controlled by Git initially
+        controlledValues: RequestsAndLimits

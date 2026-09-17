@@ -1,0 +1,28 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: nginx-demo-vpa
+  namespace: demo-app-namespace
+  labels:
+    app: nginx-demo
+    managed-by: gitops
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-demo
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: nginx
+        minAllowed:
+          cpu: 5m
+          memory: 8Mi
+        maxAllowed:
+          cpu: 200m
+          memory: 128Mi
+        controlledResources:
+          - cpu
+          - memory
+        controlledValues: RequestsAndLimits
