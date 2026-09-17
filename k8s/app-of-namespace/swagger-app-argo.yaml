@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: swagger-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/venkatasv/aksvpatest.git
+    targetRevision: add-aks-workflow
+    path: k8s/swagger-app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: swagger-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

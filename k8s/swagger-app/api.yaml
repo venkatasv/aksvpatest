@@ -1,0 +1,178 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swagger-api-code
+  namespace: swagger-app
+data:
+  main.py: |
+    import os
+    from typing import List, Optional
+
+    from fastapi import FastAPI, HTTPException
+    from pydantic import BaseModel, Field
+    from sqlalchemy import Column, Integer, String, Text, create_engine
+    from sqlalchemy.orm import declarative_base, sessionmaker
+
+    DATABASE_URL = os.getenv(
+        "DATABASE_URL",
+        "postgresql+psycopg2://swagger:swaggerpass@postgres:5432/swaggerdb",
+    )
+
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+    SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base = declarative_base()
+
+
+    class ItemRow(Base):
+        __tablename__ = "items"
+        id = Column(Integer, primary_key=True, index=True)
+        name = Column(String(100), nullable=False)
+        description = Column(Text, nullable=True)
+
+
+    class ItemCreate(BaseModel):
+        name: str = Field(..., min_length=1, max_length=100, example="book")
+        description: Optional[str] = Field(None, example="a small notebook")
+
+
+    class Item(ItemCreate):
+        id: int
+
+        class Config:
+            from_attributes = True
+
+
+    app = FastAPI(
+        title="Swagger Demo API",
+        description="Small FastAPI + Postgres demo deployed by Argo CD",
+        version="1.0.0",
+    )
+
+
+    @app.on_event("startup")
+    def on_startup():
+        Base.metadata.create_all(bind=engine)
+
+
+    @app.get("/healthz")
+    def healthz():
+        return {"status": "ok"}
+
+
+    @app.get("/items", response_model=List[Item], tags=["items"])
+    def list_items():
+        db = SessionLocal()
+        try:
+            return db.query(ItemRow).order_by(ItemRow.id).all()
+        finally:
+            db.close()
+
+
+    @app.post("/items", response_model=Item, status_code=201, tags=["items"])
+    def create_item(payload: ItemCreate):
+        db = SessionLocal()
+        try:
+            row = ItemRow(name=payload.name, description=payload.description)
+            db.add(row)
+            db.commit()
+            db.refresh(row)
+            return row
+        finally:
+            db.close()
+
+
+    @app.get("/items/{item_id}", response_model=Item, tags=["items"])
+    def get_item(item_id: int):
+        db = SessionLocal()
+        try:
+            row = db.query(ItemRow).filter(ItemRow.id == item_id).first()
+            if not row:
+                raise HTTPException(status_code=404, detail="Item not found")
+            return row
+        finally:
+            db.close()
+
+
+    @app.delete("/items/{item_id}", status_code=204, tags=["items"])
+    def delete_item(item_id: int):
+        db = SessionLocal()
+        try:
+            row = db.query(ItemRow).filter(ItemRow.id == item_id).first()
+            if not row:
+                raise HTTPException(status_code=404, detail="Item not found")
+            db.delete(row)
+            db.commit()
+        finally:
+            db.close()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swagger-api
+  namespace: swagger-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: swagger-api
+  template:
+    metadata:
+      labels:
+        app: swagger-api
+    spec:
+      containers:
+        - name: api
+          image: python:3.12-slim
+          workingDir: /app
+          command:
+            - /bin/sh
+            - -c
+            - |
+              pip install --no-cache-dir fastapi==0.115.6 uvicorn==0.32.1 sqlalchemy==2.0.36 psycopg2-binary==2.9.10 pydantic==2.10.3
+              uvicorn main:app --host 0.0.0.0 --port 8000
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: postgresql+psycopg2://swagger:swaggerpass@postgres:5432/swaggerdb
+          volumeMounts:
+            - name: code
+              mountPath: /app
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 40
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 384Mi
+      volumes:
+        - name: code
+          configMap:
+            name: swagger-api-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swagger-api
+  namespace: swagger-app
+spec:
+  selector:
+    app: swagger-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
